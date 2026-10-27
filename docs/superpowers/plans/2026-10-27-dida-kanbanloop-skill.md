@@ -114,8 +114,12 @@
 - **W14 consistency pass（2026-10-27）**：
   - `scope`：Spec UR-5/§8.4/AC-03/AC-12 已对齐为“三个精确列名 + 建议显示顺序；运行时按列 ID 解析；视觉顺序不作运行时强制”。未改 AD-2、行为规则、任务、接口、S1–S14 或 AC 矩阵结构。
   - `reason`：仅消除 W12 指出的 Spec/README 措辞张力，不改变行为或用户要求；G2 继续保持“同一 Dida 清单的同一 Kanban 视图中的三个列”语义。
-  - `review_round:3/3`：Spec/Plan 目标线已进行此次措辞修订，将接受一次独立 focused re-review；本记录不代表该复审已经给出 verdict。
+  - `review_round:3/3`：Spec/Plan 目标线的措辞修订已完成一次独立 focused re-review。W15 focused re-review: PASS — 0 BLOCKER / 0 MAJOR / 3 MINOR (2026-10-27)。
   - `verification`（实际输出）：`SKILL.md focused static checks: PASS`；`README.md focused static checks: PASS (8/8 onboarding groups)`；`Combined static acceptance: PASS (2 files; README 8/8 groups)`；指定 `grep -n "名称及顺序\|名称和顺序\|精确名称及顺序"` 对 Spec/README/SKILL 无剩余命中（exit 1），无 G1 矛盾残留；未做实时 MCP 测试。
+- **W15 review record（2026-10-27）**：独立 focused re-review 结论 **PASS — 0 BLOCKER / 0 MAJOR / 3 MINOR**，`review_round:3/3` 保持；3 项 MINOR 均不阻塞交付，无需第四轮复审。
+  1. Spec 决策表仍使用同义词“名称与顺序”，与已定稿的“建议显示顺序”措辞不一致（由本轮 W17 的 Spec 编辑修复）。
+  2. Plan Task 2 的 token 列表未显式断言 README 新增短语（“建议显示顺序”/“按列 ID 解析”/“不强制视觉顺序”）；README 实际内容已满足这些要求，属追踪性提示，不影响验收。
+  3. W14 记录未提及 W11 已做的 Audit Record 措辞更正；W11 记录本身已载明该更正。
 
 ## Scenario Fixtures Used by Tasks
 
