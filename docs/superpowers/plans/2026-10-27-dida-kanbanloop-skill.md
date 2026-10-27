@@ -49,7 +49,7 @@
 
 ## Audit Record
 
-- review_round:2/3
+- review_round:3/3
 - W4 independent pre-Build review verdict: REVISE — 0 BLOCKER / 7 MAJOR / 6 MINOR.
 - 当前阶段：W5 round 2 独立 pre-Build 审查已于 2026-10-27 PASS；Build 已获授权，但仅限 Plan 声明的范围。W3 本次仅簿记审查结果，未更改 Spec/Plan 需求。
 - `independent_pre_build_review`：**PASS**（reviewer W5，2026-10-27，`review_round:2/3`）；Severity counts：0 BLOCKER / 0 MAJOR / 0 MINOR。此前 M1–M7 与 m1–m6 均已解决，无新增阻塞问题。
@@ -105,12 +105,17 @@
     6. Audit Record 的场景证据为摘要级（W7 已独立重走全部 14 个场景），且一处旧行数引用差一。
     7. README 称列顺序为 “strict”，而 `SKILL.md` 按精确 ID 解析且不检查 `sortOrder`。
   - `review_round` 说明：保持 `2/3`；W7 的 post-Build 审查为 PASS，无需再开下一轮独立复审。
-- **W11 follow-up（2026-10-27）**：应用 W7 的三项 post-Build MINOR 修复，仅改 `README.md`、`SKILL.md` 以及本 Audit Record 簿记；不改 Spec、任务、接口、AC 矩阵、S1–S14 或需求。`review_round:2/3` 不变，这是审查后 MINOR 修复，不是新的 pre-Build 轮次。
+- **W11 follow-up（2026-10-27）**：应用两项 W7 MINOR（#4/#7）、G2 用户澄清，并在 W14 对齐 Spec 措辞。W11 阶段仅改 `README.md`、`SKILL.md` 以及本 Audit Record 簿记，不改 Spec、任务、接口、AC 矩阵、S1–S14 或需求；当时 `review_round:2/3` 不变。W14 的文件范围与轮次见下方 W14 记录。
   - G1（对应 W7 MINOR #7）已解决：README 列配置改为“名称必须精确为（建议显示顺序）”，保留 `处理中` → `待审查` → `已完成` 展示，并新增“按列 ID 解析状态、不依赖视觉顺序”。不新增 `sortOrder` 检查：视觉顺序不是用户需求，强制校验只会造成假停止。
   - G2 已获用户确认：README 与 `SKILL.md` §3.3 均澄清“看板”指目标清单的同一 Kanban 视图，三个必需名称是该视图中的列名，不是三个独立看板；运行时行为不变。
   - G3（对应 W7 MINOR #4）已解决：`SKILL.md` §7 最终确认改为同时要求返回/回读显示 `columnId == reviewColumn.id` 与 `status = 0`；§11 结束前自问同步加入该列 ID 条件；未新增工具或写入行为。
   - `W11_static_checks`（实际输出，2026-10-27）：`SKILL.md focused static checks: PASS`；`README.md focused static checks: PASS (8/8 onboarding groups)`；`Combined static acceptance: PASS (2 files; README 8/8 groups)`；`git diff --check` 无输出，exit 0。
   - `W11_diff_scope`：仅 `README.md`、`SKILL.md` 与本 Plan 的 Audit Record；`git status --short --untracked-files=all` 为 `M README.md`、`M SKILL.md`、`M docs/superpowers/plans/2026-10-27-dida-kanbanloop-skill.md`；未 stage、未 commit、未 push，未做实时 MCP 端到端测试。
+- **W14 consistency pass（2026-10-27）**：
+  - `scope`：Spec UR-5/§8.4/AC-03/AC-12 已对齐为“三个精确列名 + 建议显示顺序；运行时按列 ID 解析；视觉顺序不作运行时强制”。未改 AD-2、行为规则、任务、接口、S1–S14 或 AC 矩阵结构。
+  - `reason`：仅消除 W12 指出的 Spec/README 措辞张力，不改变行为或用户要求；G2 继续保持“同一 Dida 清单的同一 Kanban 视图中的三个列”语义。
+  - `review_round:3/3`：Spec/Plan 目标线已进行此次措辞修订，将接受一次独立 focused re-review；本记录不代表该复审已经给出 verdict。
+  - `verification`（实际输出）：`SKILL.md focused static checks: PASS`；`README.md focused static checks: PASS (8/8 onboarding groups)`；`Combined static acceptance: PASS (2 files; README 8/8 groups)`；指定 `grep -n "名称及顺序\|名称和顺序\|精确名称及顺序"` 对 Spec/README/SKILL 无剩余命中（exit 1），无 G1 矛盾残留；未做实时 MCP 测试。
 
 ## Scenario Fixtures Used by Tasks
 
