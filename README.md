@@ -1,16 +1,84 @@
-# opencode-dida-kanbanloop
+# dida-kanbanloop-skill
 
-OpenCode workflow for keeping a Dida365 (滴答清单) project's Kanban board in sync with task state.
+一个自包含的 OpenCode Skill：每次把一个由「清单/项目 + Kanban 看板 + 顶层父任务」唯一指定的 Dida365／TickTick 父任务推进到人工审查门。Skill 完成真实工作、按证据同步有序子任务，最后只把父任务移到 `待审查` 并停止；`已完成` 永远由用户审查后手动设置，Skill 绝不完成父任务。
 
-## Overview
+## 它做什么
 
-This project explores a loop where task status and Kanban columns stay aligned:
+- 一次调用只处理一个顶层父任务，不批量处理其他任务。
+- 读取父任务和全部子任务（active、abandoned、completed 历史）的标题与描述，按内容、依赖和用户习惯决定顺序。
+- 开始时只把父任务移入 `处理中`；子任务只允许创建和按实际完成勾选，绝不在列之间移动。
+- 把所有请求工作、验证和本地进度完成并有真实证据后，只把父任务移入 `待审查`，然后停止等待人工审查。
 
-- Active top-level tasks move to the `待办` column.
-- Completed top-level tasks move to the `已完成` column.
-- Subtask parent relationships are preserved; only top-level tasks decide placement.
+## 安装
 
-## Notes
+1. 把包含根 `SKILL.md` 的本仓库目录放到当前 OpenCode 使用的 Skills 目录，例如：
 
-- Dida365 API rate limits are not publicly documented; requests should be conservative and retry after waiting 30–60 seconds when a rate-limit error occurs.
-- Broad task queries may be capped to 200 results per response, so date ranges should be narrowed when enumerating history.
+   ```text
+   ~/.config/opencode/skills/dida-kanbanloop-skill/
+   ```
+
+2. 按所用 OpenCode 版本重新加载 Skill 或开启一个新会话，使其识别 `SKILL.md` 的元数据。
+3. 本项目不提供自动安装器，也没有运行时脚本、依赖或后台服务；安装单元就是仓库目录与根 `SKILL.md`。
+
+## 前提条件
+
+- 已配置并已认证 Dida365/TickTick MCP；Skill 通过该 MCP 读取和写入任务，不能用本地文字模拟同步。
+- 目标项目必须授予读取和写入权限（`permission = write`）；只读或评论权限会在任何变更前停止。
+- 目标项目使用 Kanban 视图；普通列表或时间线视图会被拒绝并提示配置问题。
+
+## 看板配置（必须手工完成）
+
+目标看板必须有三个工作流列，名称和顺序严格为：
+
+`处理中` → `待审查` → `已完成`
+
+- 三个名称必须各精确存在一次；带空白或近似名称不能替代必需列，例如 `处理中 `、`已完成 ` 或 `待审核` 都不合格。
+- Skill 不会自动创建、改名或重排任何列，也不会调用列写入接口。
+- 看板可以有其他列；其他列会被忽略且永不修改。
+- 列缺失、重名或属于其他项目时，Skill 会在写入前停止，并说明需要手工修正的内容。
+
+## 调用方式
+
+在请求中同时提供清单/项目、看板和顶层父任务，例如：
+
+```text
+使用 dida-kanbanloop-skill 处理：
+- 清单/项目：产品发布
+- Kanban 看板：产品发布
+- 顶层父任务：v2 发布准备
+```
+
+- 缺少任何一项时，Skill 会一次性询问全部缺失项，并在答案到达前不做变更。
+- 名称重复或看板无法唯一绑定到项目时，需要先消歧；也可以直接提供任务 ID。
+- 选中的任务如果是子任务（`parentId` 非空），会被拒绝并要求提供顶层父任务。
+- 按标题找不到 active 父任务时，Skill 会报告“未找到 active 父任务”并要求任务 ID，以区分“未找到”和“已结束”；只有凭 ID 读到 `status = 2` 或 `status = -1` 才会报告已完成或已放弃。
+
+## 子任务与本地进度
+
+- 复用合适的活跃子任务；已完成且满足当前要求的子任务保留为完成，不创建重复项。
+- 仅对缺失步骤新建子任务，标题采用 `N. <动作> [Agent]` 并以 `[Agent]` 结尾；已有子任务不改名、不重编号、不重排。
+- 子任务只有在实际完成并有可观察产物、测试或复现结果后才勾选完成；开始工作或创建子任务不算完成。
+- 子任务绝不在看板列之间移动，只允许完成状态变化。
+- 失去必要性但未完成的任务保持 incomplete/active，并报告其 ID 与原因；在用户明确排除、放弃或删除前，它会阻止父任务进入 `待审查`。
+- 本地项目/文档进度继续按目标项目的 `AGENTS.md`、`CLAUDE.md`、已有文档和用户习惯更新；不强制新增进度文件，TickTick 子任务镜像不能取代正常本地工作流。
+
+## 人工审查：通过或拒绝
+
+**审查通过**：用户自行把父任务从 `待审查` 移到 `已完成`。Skill 不会替用户完成父任务，也不会自动进入 `已完成`。
+
+**拒绝**：用户先更新父任务描述，写清需要修正的内容，然后把父任务移回 `处理中`，再重新调用 Skill。下一轮会读取最新描述和全部子任务，复用仍然有效的项，为修正工作创建有区分度的新步骤，并且不重开旧完成项。
+
+父任务仍在 `待审查` 时再次调用，Skill 会零写入停止，不会自动把它拉回 `处理中`。
+
+## 故障排查
+
+- **MCP 缺失或未认证**：先配置并认证 Dida365/TickTick MCP；Skill 会报告配置阻塞，不会假装同步。
+- **权限不足**：确认项目为 `write` 权限；只读或评论权限会在任何变更前停止。
+- **列不匹配**：按上文精确名称手工准备 `处理中`、`待审查`、`已完成`；Skill 不会补列或改名。
+- **读取不完整**：active+abandoned 或 completed 历史任一分支不可用、截断或日期范围不全时，Skill 会零写入停止并报告缺口，不会用不完整快照继续。
+- **失败与重试**：只读瞬时错误最多重试一次；限流遵守服务端退避；结果不明的写入先按 ID 回读，创建结果不明时先重新枚举核对，绝不盲目重复创建。
+- **端到端验证边界**：本仓库的构建验证是静态检查与场景走查，未做实时 MCP 端到端测试；首次真实使用应保留每次写入的响应或回读证据，并确认子任务列未发生变化。
+
+## 验证边界
+
+本仓库没有运行时测试夹具。安装前请先手工确认 MCP、权限和看板列；Skill 在预检不通过时会停止而不是猜测。
