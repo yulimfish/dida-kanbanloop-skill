@@ -51,6 +51,8 @@ Dida 状态值固定为：`0` active、`-1` abandoned、`2` completed。正文�
 
 ### 3.3 唯一解析项目与看板
 
+本 Skill 的“看板”指目标清单的 Kanban 视图；三个必需名称是同一看板中的列名，不是三个独立看板。
+
 1. 用 `list_projects(offset, limit)` 分页，以精确名称或明确 ID 匹配项目，不得采用首个模糊结果。
 2. 调用 `get_project_with_undone_tasks(project_id)`，检查项目、`viewMode`、`permission` 与 active 任务范围。
 3. 项目名称重复且无法消歧、`viewMode` 明确不是 `kanban`、或 `permission` 不是 `write` 时停止。
@@ -140,7 +142,7 @@ Dida 状态值固定为：`0` active、`-1` abandoned、`2` completed。正文�
 
 `update_task({ task_id: parent.id, task: { columnId: reviewColumn.id } })`
 
-确认返回或回读仍显示 `status = 0` 后，简要报告实际工作、验证、子任务同步和“等待用户审查”，然后立即停止。不得再创建子任务、继续做无关工作、完成父任务或把父任务移到 `已完成`。
+确认返回或回读显示 `columnId == reviewColumn.id` 且 `status = 0` 后，简要报告实际工作、验证、子任务同步和“等待用户审查”，然后立即停止。不得再创建子任务、继续做无关工作、完成父任务或把父任务移到 `已完成`。
 
 最终报告如有排除项，必须逐项列出：原先 abandoned child 的 `taskId + status = -1`；用户明确排除 child 的 `taskId + status = 0 + 用户排除原因`。不得把这些状态变化记在 Skill 名下。
 
@@ -192,6 +194,6 @@ Dida 状态值固定为：`0` active、`-1` abandoned、`2` completed。正文�
 
 结束前自问：
 
-- 父任务是否仍为 `status = 0`，且只被移到 `待审查`？
+- 父任务是否仍为 `status = 0` 且 `columnId == reviewColumn.id`，并且只被移到 `待审查`？
 - 是否已停止，未创建“等待审查”子任务，也未把父任务移到 `已完成`？
 - 报告是否列出所有 abandoned/用户排除项及部分成功/未同步项？
